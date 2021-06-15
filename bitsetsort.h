@@ -645,13 +645,13 @@ void __bitsetsort_loop(
   __sorting_network::__reverse_conditional_swap<_RandomAccessIterator, _Compare>
       __reverse_cond_swap(__comp);
   while (true) {
-    __limit--;
     if (__limit == 0) {
       // Fallback to heap sort as Introsort suggests.
       _VSTD::make_heap(__first, __last, __comp);
       _VSTD::sort_heap(__first, __last, __comp);
       return;
     }
+    __limit--;
     difference_type __len = __last - __first;
     if (__len <= __bitonic::__detail::__batch) {
       __sorting_network::__sort1to8(__first, __len, __cond_swap);
