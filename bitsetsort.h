@@ -633,7 +633,8 @@ template <class _Compare, class _RandomAccessIterator>
 void __bitsetsort_loop(
     _RandomAccessIterator __first, _RandomAccessIterator __last,
     _Compare __comp,
-    typename _VSTD::iterator_traits<_RandomAccessIterator>::value_type* __buff) {
+    typename _VSTD::iterator_traits<_RandomAccessIterator>::value_type* __buff,
+    typename _VSTD::iterator_traits<_RandomAccessIterator>::difference_type __limit) {
   _LIBCPP_CONSTEXPR_AFTER_CXX11 int __ninther_threshold = 128;
   typedef typename _VSTD::iterator_traits<_RandomAccessIterator>::difference_type
       difference_type;
@@ -644,6 +645,13 @@ void __bitsetsort_loop(
   __sorting_network::__reverse_conditional_swap<_RandomAccessIterator, _Compare>
       __reverse_cond_swap(__comp);
   while (true) {
+    __limit--;
+    if (__limit == 0) {
+      // Fallback to heap sort as Introsort suggests.
+      _VSTD::make_heap(__first, __last, __comp);
+      _VSTD::sort_heap(__first, __last, __comp);
+      return;
+    }
     difference_type __len = __last - __first;
     if (__len <= __bitonic::__detail::__batch) {
       __sorting_network::__sort1to8(__first, __len, __cond_swap);
@@ -684,24 +692,42 @@ void __bitsetsort_loop(
     // Sort smaller range with recursive call and larger with tail recursion
     // elimination.
     if (__ret.first - __first < __last - __ret.first) {
-      __bitsetsort_loop<_Compare>(__first, __ret.first, __comp, __buff);
+      __bitsetsort_loop<_Compare>(__first, __ret.first, __comp, __buff, __limit);
       __first = ++__ret.first;
     } else {
-      __bitsetsort_loop<_Compare>(__ret.first + 1, __last, __comp, __buff);
+      __bitsetsort_loop<_Compare>(__ret.first + 1, __last, __comp, __buff, __limit);
       __last = __ret.first;
     }
   }
 }
+
+template<typename _Number>
+inline _LIBCPP_INLINE_VISIBILITY _Number __log2i(_Number __n) {
+    _Number __log2 = 0;
+    while (__n > 1) {
+      __log2++;
+      __n >>= 1;
+    }
+    return __log2;
+}
+
+
 template <class _Compare, class _RandomAccessIterator>
 inline _LIBCPP_INLINE_VISIBILITY void __bitsetsort_internal(
     _RandomAccessIterator __first, _RandomAccessIterator __last,
     _Compare __comp) {
   typedef typename _VSTD::iterator_traits<_RandomAccessIterator>::value_type
       value_type;
+  typedef typename _VSTD::iterator_traits<_RandomAccessIterator>::difference_type
+      difference_type;
   typename _VSTD::aligned_storage<sizeof(value_type), alignof(value_type)>::type
       __buff[__bitonic::__detail::__small_sort_max];
+
+  // 2*log2 comes from Introsort https://reviews.llvm.org/D36423.
+  difference_type __depth_limit = 2 * __log2i(__last - __first);
   __bitsetsort_loop(__first, __last, __comp,
-                    reinterpret_cast<value_type*>(&__buff[0]));
+                    reinterpret_cast<value_type*>(&__buff[0]),
+                    __depth_limit);
 }
 }  // namespace __bitsetsort
 
