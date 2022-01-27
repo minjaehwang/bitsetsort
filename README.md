@@ -1,6 +1,6 @@
 # Bitset Sort
 
-Bitset Sort is a variant of quick sort, specifically [BlockQuickSort](https://dl.acm.org/doi/fullHtml/10.1145/3274660). Bitset Sort uses a carefully written partition function to let the compiler generates SIMD instructions without actually writing SIMD intrinsics in the loop.
+Bitset Sort is a variant of quick sort, specifically [BlockQuickSort](https://dl.acm.org/doi/fullHtml/10.1145/3274660). Bitset Sort uses a carefully written partition function to let the compiler generate SIMD instructions without actually writing SIMD intrinsics in the loop.
 
 ![RandomInput](results/random_sort_znver3_ryzen5950x.svg)
 
@@ -46,7 +46,7 @@ BlockQuickSort almost eliminates branch predictions in the quick sort by doing c
 ```
 (excerpt from [BlockQuickSort Algorithm 3](https://dl.acm.org/doi/fullHtml/10.1145/3274660))
 
-This loop will make B comparisons in a single for-loop and stores offsets only when the comparison returns true (pivot >= A[l + i]). This loop does not have a branch but a data dependency on variable numL. Swaps can be done in a batch without a branch.
+This loop will make B comparisons in a single for-loop and store offsets only when the comparison returns true (pivot >= A[l + i]). This loop does not have a branch but a data dependency on variable numL. Swaps can be done in a batch without a branch.
 
 Bitset Sort improves the above partition function by using a bitset (64 bit set) which allows the C++ compiler to generate SIMD instructions.
 
@@ -104,14 +104,14 @@ To see the unrolled loop in action, the following is the generated code of the B
 
 ### Small sort
 
-Quicksort has a higher overhead for sorting smaller arrays. Many practical implementation uses a simpler sort algorithm such as insertion sort when dealing with smaller arrays.
+Quicksort has a higher overhead for sorting smaller arrays. Many practical implementations use a simpler sort algorithm such as insertion sort when dealing with smaller arrays.
 
-Bitset Sort uses a sorting network (Batcher sorting network) and Bitonic Order Merge Sort for smaller arrays. For N <= 8, it uses a conditional move based sorting networks. For N > 8 and N <= 32, it uses Bitonic Order Merge Sort for faster sorting.
+Bitset Sort uses a sorting network (Batcher sorting network) and Bitonic Order Merge Sort for smaller arrays. For N <= 8, it uses a conditional move-based sorting networks. For N > 8 and N <= 32, it uses Bitonic Order Merge Sort for faster sorting.
 
 #### Bitonic Order Merge Sort
-Bitset Sort uses Bitonic Order Merge Sort for N <= 32 as it is faster than insertion sorts or other small sorts. Bitonic Order Merge Sort deserves a separate document but we will only explain the fundamental ideas for the sake of this document.
+Bitset Sort uses Bitonic Order Merge Sort for N <= 32 as it is faster than insertion sort or other small sorts. Bitonic Order Merge Sort deserves a separate document but we will only explain the fundamental ideas for the sake of this document.
 
-A bitonic order is a repeatition of ascending sorted arrays followed by descending sorted arrays.
+A bitonic order is a sequence of ascending sorted arrays followed by descending sorted arrays.
 
 Example.
 ```
@@ -188,7 +188,7 @@ The edge case is nicely handled because a[l] is the largest element on the right
 
 [PdqSort](https://github.com/orlp/pdqsort) nicely integrated a pattern recognition for ascending, descending, pipe organ, and single element patterns into the quick sort function. By carefully picking pivots and partitioning arrays, PdqSort does not mix up already sorted arrays like a simple quick sort.
 
-Bitset Sort adopts the idea of PdqSort partially to exhibit O(n) behavior for known patterns. It might be possible to exploit more of known patterns but the author does not intend to optimize these patterns any further at this point. This is the author's belief that real world workload resembles randomized inputs rather than a few simple patterns.
+Bitset Sort adopts the idea of PdqSort partially to exhibit O(n) behavior for known patterns. It might be possible to exploit more known patterns but the author does not intend to optimize these patterns any further at this point. This is the author's belief that real world workload resembles randomized inputs rather than a few simple patterns.
 
 # Test Result
 
