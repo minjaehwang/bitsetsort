@@ -58,7 +58,7 @@ class __reverse_conditional_swap {
       *__y = __result ? _VSTD::move(*__y) : _VSTD::move(*__x);
       *__x = _VSTD::move(__min);
     } else {
-      if (__result) {
+      if (!__result) {
         _VSTD::iter_swap(__x, __y);
       }
     }
@@ -231,7 +231,7 @@ __median3(_ForwardIterator __x, _ForwardIterator __y, _ForwardIterator __z, _Com
       }
       return __y;
     }
-}              
+}
 
 namespace __bitonic {
 class __detail {
